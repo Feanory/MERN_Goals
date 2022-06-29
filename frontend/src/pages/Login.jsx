@@ -1,5 +1,11 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {FaSignInAlt} from 'react-icons/fa';
+import {useDispatch, useSelector} from 'react-redux';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+import {useNavigate} from 'react-router-dom';
+import Spinner from '../components/Spinner';
+import {login, reset} from '../features/auth/authSlice';
 
 
 function Login() {
@@ -7,6 +13,27 @@ function Login() {
 		email: '',
 		password: '',
 	});
+	const [isShowAlert, setIsShowAlert] = useState(false);
+
+	const { email, password } = formData;
+
+	const navigate = useNavigate();
+	const dispatch = useDispatch();
+
+	const { user, isLoading, isError, isSuccess, message } = useSelector((state) => state.auth);
+
+	useEffect(() => {
+		if (isError) {
+			setIsShowAlert(true);
+		}
+
+		if (isSuccess || user) {
+			navigate('/')
+		}
+
+		dispatch(reset())
+
+	}, [user, isError, isSuccess, message, dispatch, navigate]);
 
 	const onChange = e => {
 		const { name, value } = e.target;
@@ -18,6 +45,17 @@ function Login() {
 
 	const onSubmit = (e) => {
 		e.preventDefault();
+
+		const userData = {
+			email,
+			password,
+		}
+
+		dispatch(login(userData));
+	}
+
+	if (isLoading) {
+		return <Spinner />
 	}
 
 	return (
@@ -53,6 +91,9 @@ function Login() {
 						<button className="btn btn-block" type="submit">Login</button>
 					</div>
 				</form>
+				<Snackbar open={isShowAlert} autoHideDuration={2000} onClose={() => setIsShowAlert(false)}>
+					<MuiAlert severity="error" elevation={6} variant="filled">Wrong credentials</MuiAlert>
+				</Snackbar>
 			</section>
 		</>
 	);

@@ -1,6 +1,11 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {FaUser} from 'react-icons/fa';
-
+import {useDispatch, useSelector} from 'react-redux';
+import {useNavigate} from 'react-router-dom';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+import Spinner from '../components/Spinner';
+import {register, reset} from '../features/auth/authSlice';
 
 function Register() {
 	const [formData, setFormData] = useState({
@@ -9,6 +14,26 @@ function Register() {
 		password: '',
 		password2: '',
 	});
+	const [alertMessage, setAlertMessage] = useState('');
+
+	const { name, password, email, password2 } = formData;
+	const navigate = useNavigate();
+	const dispatch = useDispatch();
+
+	const { user, isLoading, isError, isSuccess, message } = useSelector((state) => state.auth);
+
+	useEffect(() => {
+		if (isError) {
+			setAlertMessage(message)
+		}
+
+		if (isSuccess || user) {
+			navigate('/')
+		}
+
+		dispatch(reset())
+
+	}, [user, isError, isSuccess, message, dispatch, navigate]);
 
 	const onChange = e => {
 		const { name, value } = e.target;
@@ -18,8 +43,25 @@ function Register() {
 		}))
 	}
 
+
 	const onSubmit = (e) => {
 		e.preventDefault();
+
+		if (password !== password2) {
+			setAlertMessage('Password do not match!');
+		} else {
+			const userData = {
+				name,
+				password,
+				email
+			}
+
+			dispatch(register(userData));
+		}
+	}
+
+	if (isLoading) {
+		return <Spinner />
 	}
 
 	return (
@@ -65,8 +107,8 @@ function Register() {
 						<input
 							type="password"
 							className="form-control"
-							id="password"
-							name="password"
+							id="password2"
+							name="password2"
 							placeholder="Confirm your password"
 							onChange={onChange}
 						/>
@@ -75,6 +117,9 @@ function Register() {
 						<button className="btn btn-block" type="submit">Submit</button>
 					</div>
 				</form>
+				<Snackbar open={alertMessage} autoHideDuration={2000} onClose={() => setAlertMessage('')}>
+					<MuiAlert severity="error" elevation={6} variant="filled">{alertMessage}</MuiAlert>
+				</Snackbar>
 			</section>
 		</>
 	);
